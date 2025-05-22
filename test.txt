@@ -1,0 +1,1700 @@
+{
+  "name": "fitness-competition-app",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.10.7",
+    "eslint": "^8.48.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^14.0.1",
+    "prettier": "^3.0.0",
+    "turbo": "^1.10.7",
+    "typescript": "^5.1.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^18.2.0"
+    }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
+
+---turbo.json---
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": ["build"]
+    }
+  }
+}
+
+---apps/web/package.json---
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "next lint",
+    "start": "next start",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.8.0",
+    "@headlessui/react": "^1.7.17",
+    "@supabase/supabase-js": "^2.38.0",
+    "@tanstack/react-query": "^4.32.0",
+    "clsx": "^2.0.0",
+    "graphql": "^16.8.0",
+    "lucide-react": "^0.263.1",
+    "next": "14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.45.0",
+    "recharts": "^2.8.0",
+    "tailwind-merge": "^1.14.0",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.22.0",
+    "@fitness/lib": "workspace:*",
+    "@fitness/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.15",
+    "eslint": "^8.48.0",
+    "eslint-config-next": "14.0.0",
+    "postcss": "^8.4.28",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.1.6",
+    "vitest": "^0.34.0"
+  }
+}
+
+---apps/web/next.config.js---
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  transpilePackages: ["@fitness/ui", "@fitness/lib"],
+  images: {
+    domains: ['supabase.co'],
+  },
+  experimental: {
+    appDir: false // Using Pages Router as specified
+  }
+}
+
+module.exports = nextConfig
+
+---apps/web/tailwind.config.js---
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    '../../packages/ui/src/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+}
+
+---apps/web/src/styles/globals.css---
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+---apps/web/src/pages/_app.tsx---
+import '../styles/globals.css'
+import type { AppProps } from 'next/app'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ApolloProvider } from '@apollo/client'
+import { apolloClient } from '../lib/apollo'
+import { AuthProvider } from '../lib/auth-context'
+import { useState } from 'react'
+
+export default function App({ Component, pageProps }: AppProps) {
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+      },
+    },
+  }))
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ApolloProvider client={apolloClient}>
+        <AuthProvider>
+          <Component {...pageProps} />
+        </AuthProvider>
+      </ApolloProvider>
+    </QueryClientProvider>
+  )
+}
+
+---apps/web/src/pages/_document.tsx---
+import { Html, Head, Main, NextScript } from 'next/document'
+
+export default function Document() {
+  return (
+    <Html lang="en">
+      <Head />
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  )
+}
+
+---apps/web/src/pages/index.tsx---
+import { Button } from '@fitness/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@fitness/ui/card'
+import { Trophy, Users, Zap, Target } from 'lucide-react'
+import Link from 'next/link'
+import { useAuth } from '../lib/auth-context'
+
+export default function LandingPage() {
+  const { user, signInWithGoogle } = useAuth()
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 pt-20 pb-16">
+        <div className="text-center max-w-4xl mx-auto">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Compete with friends. Get fit. Win the season.
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            Transform your fitness journey into an epic competition. Create leagues, 
+            track workouts, and battle friends in weekly matchups.
+          </p>
+          
+          {user ? (
+            <Link href="/dashboard">
+              <Button size="lg" className="text-lg px-8 py-4">
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Button 
+              size="lg" 
+              className="text-lg px-8 py-4"
+              onClick={signInWithGoogle}
+            >
+              Get Started - It's Free
+            </Button>
+          )}
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
+          <Card className="text-center">
+            <CardHeader>
+              <Trophy className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+              <CardTitle>Competitive Leagues</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Create private leagues with friends or join public competitions
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <Users className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <CardTitle>Team Up</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Form teams and compete together against other groups
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <Zap className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <CardTitle>Weekly Battles</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Head-to-head matchups every week with real-time scoring
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <Target className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <CardTitle>Track Everything</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Steps, active minutes, calories - comprehensive fitness tracking
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* How It Works */}
+      <div className="bg-white py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-blue-600">1</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Create or Join</h3>
+              <p className="text-gray-600">Start a league with friends or join an existing competition</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-green-600">2</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Log Workouts</h3>
+              <p className="text-gray-600">Track your daily fitness activities and earn points</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-yellow-600">3</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Win & Celebrate</h3>
+              <p className="text-gray-600">Compete weekly and crown the season champion</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+---apps/web/src/pages/dashboard.tsx---
+import { useAuth } from '../lib/auth-context'
+import { useQuery } from '@tanstack/react-query'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@fitness/ui/card'
+import { Button } from '@fitness/ui/button'
+import { Trophy, Calendar, TrendingUp, Users } from 'lucide-react'
+import { getCurrentWeekMatchups, getUserLeagues } from '../lib/api'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import Link from 'next/link'
+
+export default function Dashboard() {
+  const { user } = useAuth()
+  
+  const { data: leagues } = useQuery({
+    queryKey: ['user-leagues'],
+    queryFn: getUserLeagues,
+    enabled: !!user
+  })
+
+  const { data: matchups } = useQuery({
+    queryKey: ['current-matchups'],
+    queryFn: getCurrentWeekMatchups,
+    enabled: !!user
+  })
+
+  // Mock data for chart
+  const weeklyData = [
+    { week: 'Week 1', points: 45 },
+    { week: 'Week 2', points: 52 },
+    { week: 'Week 3', points: 38 },
+    { week: 'Week 4', points: 61 },
+    { week: 'Week 5', points: 49 },
+  ]
+
+  if (!user) {
+    return <div>Please sign in to view dashboard</div>
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Welcome back, {user.user_metadata?.full_name || 'Champion'}!
+              </h1>
+              <p className="text-gray-600">Ready to dominate this week?</p>
+            </div>
+            <Link href="/workout">
+              <Button>Log Workout</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Leagues</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{leagues?.length || 0}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">This Week's Points</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">42</div>
+              <p className="text-xs text-muted-foreground">+12 from last week</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Current Rank</CardTitle>
+              <Trophy className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">#3</div>
+              <p className="text-xs text-muted-foreground">in main league</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Win Streak</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">2</div>
+              <p className="text-xs text-muted-foreground">weeks</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Current Matchups */}
+          <Card>
+            <CardHeader>
+              <CardTitle>This Week's Matchups</CardTitle>
+              <CardDescription>Your head-to-head battles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {matchups?.map((matchup) => (
+                  <div key={matchup.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <div className="font-semibold">{matchup.home_team}</div>
+                        <div className="text-2xl font-bold text-blue-600">{matchup.home_score}</div>
+                      </div>
+                      <div className="text-sm text-gray-500">vs</div>
+                      <div className="text-center">
+                        <div className="font-semibold">{matchup.away_team}</div>
+                        <div className="text-2xl font-bold text-red-600">{matchup.away_score}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {matchup.winner ? `${matchup.winner} wins!` : 'In progress'}
+                    </div>
+                  </div>
+                )) || (
+                  <p className="text-gray-500 text-center py-8">No active matchups</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Performance Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Performance</CardTitle>
+              <CardDescription>Your points over the last 5 weeks</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="week" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="points" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <Link href="/workout">
+                  <Button>Log Today's Workout</Button>
+                </Link>
+                <Link href="/leagues">
+                  <Button variant="outline">View All Leagues</Button>
+                </Link>
+                <Link href="/leagues/new">
+                  <Button variant="outline">Create New League</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+---apps/web/src/lib/apollo.ts---
+import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client'
+import { setContext } from '@apollo/client/link/context'
+import { supabase } from './supabase'
+
+const httpLink = createHttpLink({
+  uri: '/api/graphql',
+})
+
+const authLink = setContext(async (_, { headers }) => {
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  return {
+    headers: {
+      ...headers,
+      authorization: session?.access_token ? `Bearer ${session.access_token}` : '',
+    }
+  }
+})
+
+export const apolloClient = new ApolloClient({
+  link: authLink.concat(httpLink),
+  cache: new InMemoryCache(),
+})
+
+---apps/web/src/lib/supabase.ts---
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+---apps/web/src/lib/auth-context.tsx---
+import { createContext, useContext, useEffect, useState } from 'react'
+import { User, Session } from '@supabase/supabase-js'
+import { supabase } from './supabase'
+
+interface AuthContextType {
+  user: User | null
+  session: Session | null
+  signInWithGoogle: () => Promise<void>
+  signOut: () => Promise<void>
+  loading: boolean
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    })
+  }
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+  }
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      session,
+      signInWithGoogle,
+      signOut,
+      loading
+    }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}
+
+---apps/web/src/lib/api.ts---
+import { supabase } from './supabase'
+
+export async function getUserLeagues() {
+  const { data, error } = await supabase
+    .from('membership')
+    .select(`
+      id,
+      team_name,
+      wins,
+      losses,
+      ties,
+      league:league_id (
+        id,
+        name,
+        code,
+        is_public
+      )
+    `)
+    .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+
+  if (error) throw error
+  return data
+}
+
+export async function getCurrentWeekMatchups() {
+  // This would normally get current week's matchups for the user
+  // For now, return mock data
+  return [
+    {
+      id: '1',
+      home_team: 'Your Team',
+      away_team: 'Rival Squad',
+      home_score: 45,
+      away_score: 38,
+      winner: 'Your Team'
+    }
+  ]
+}
+
+export async function logWorkout(data: {
+  steps: number
+  activeMinutes: number
+  calories: number
+  date: string
+}) {
+  const user = (await supabase.auth.getUser()).data.user
+  if (!user) throw new Error('Not authenticated')
+
+  const { error } = await supabase
+    .from('workout_entry')
+    .upsert({
+      user_id: user.id,
+      entry_date: data.date,
+      steps: data.steps,
+      active_minutes: data.activeMinutes,
+      calories: data.calories
+    })
+
+  if (error) throw error
+}
+
+---packages/lib/package.json---
+{
+  "name": "@fitness/lib",
+  "version": "0.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "eslint": "^8.48.0",
+    "tsup": "^7.2.0",
+    "typescript": "^5.1.6",
+    "vitest": "^0.34.0"
+  }
+}
+
+---packages/lib/src/index.ts---
+export * from './scoring'
+export * from './schemas'
+export * from './supabase'
+export * from './types'
+
+---packages/lib/src/scoring.ts---
+import { z } from 'zod'
+
+export const MetricsSchema = z.object({
+  steps: z.number().min(0),
+  activeMinutes: z.number().min(0),
+  calories: z.number().min(0)
+})
+
+export type Metrics = z.infer<typeof MetricsSchema>
+
+export function computeDailyPoints(m: Metrics): number {
+  const stepPts = Math.floor(m.steps / 1000) * 1
+  const minutePts = Math.floor(m.activeMinutes / 10) * 1
+  const calPts = Math.floor(m.calories / 100) * 1
+  const goalBonus = (m.steps >= 10_000 && m.activeMinutes >= 30) ? 5 : 0
+  return stepPts + minutePts + calPts + goalBonus
+}
+
+export function computeWeeklyTotal(dailyMetrics: Metrics[]): number {
+  return dailyMetrics.reduce((total, daily) => total + computeDailyPoints(daily), 0)
+}
+
+---packages/lib/src/schemas.ts---
+import { z } from 'zod'
+
+export const ProfileSchema = z.object({
+  id: z.string().uuid(),
+  display_name: z.string().max(32),
+  avatar_url: z.string().url().optional(),
+  bio: z.string().optional(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime()
+})
+
+export const LeagueSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  code: z.string().length(6),
+  commissioner_id: z.string().uuid(),
+  is_public: z.boolean().default(false),
+  created_at: z.string().datetime()
+})
+
+export const SeasonSchema = z.object({
+  id: z.string().uuid(),
+  league_id: z.string().uuid(),
+  start_date: z.string().date(),
+  end_date: z.string().date(),
+  num_weeks: z.number().min(4).max(52),
+  created_at: z.string().datetime()
+})
+
+export const MembershipSchema = z.object({
+  id: z.string().uuid(),
+  league_id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  team_name: z.string().min(1).max(50),
+  wins: z.number().min(0).default(0),
+  losses: z.number().min(0).default(0),
+  ties: z.number().min(0).default(0),
+  is_group: z.boolean().default(false)
+})
+
+export const WorkoutEntrySchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  entry_date: z.string().date(),
+  steps: z.number().min(0).default(0),
+  active_minutes: z.number().min(0).default(0),
+  calories: z.number().min(0).default(0),
+  created_at: z.string().datetime()
+})
+
+export const MatchupSchema = z.object({
+  id: z.string().uuid(),
+  week_id: z.string().uuid(),
+  home_membership: z.string().uuid().optional(),
+  away_membership: z.string().uuid().optional(),
+  home_score: z.number().min(0).default(0),
+  away_score: z.number().min(0).default(0),
+  winner_membership: z.string().uuid().optional()
+})
+
+// Input schemas for mutations
+export const CreateLeagueInputSchema = z.object({
+  name: z.string().min(1).max(100),
+  is_public: z.boolean().default(false)
+})
+
+export const JoinLeagueInputSchema = z.object({
+  code: z.string().length(6),
+  team_name: z.string().min(1).max(50)
+})
+
+export const LogWorkoutInputSchema = z.object({
+  entry_date: z.string().date(),
+  steps: z.number().min(0),
+  active_minutes: z.number().min(0),
+  calories: z.number().min(0)
+})
+
+export type Profile = z.infer<typeof ProfileSchema>
+export type League = z.infer<typeof LeagueSchema>
+export type Season = z.infer<typeof SeasonSchema>
+export type Membership = z.infer<typeof MembershipSchema>
+export type WorkoutEntry = z.infer<typeof WorkoutEntrySchema>
+export type Matchup = z.infer<typeof MatchupSchema>
+export type CreateLeagueInput = z.infer<typeof CreateLeagueInputSchema>
+export type JoinLeagueInput = z.infer<typeof JoinLeagueInputSchema>
+export type LogWorkoutInput = z.infer<typeof LogWorkoutInputSchema>
+
+---packages/lib/src/supabase.ts---
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from './types'
+
+export function createSupabaseClient(url: string, key: string) {
+  return createClient<Database>(url, key)
+}
+
+---packages/lib/src/types.ts---
+export interface Database {
+  public: {
+    Tables: {
+      profile: {
+        Row: {
+          id: string
+          display_name: string
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          display_name: string
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          display_name?: string
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      league: {
+        Row: {
+          id: string
+          name: string
+          code: string
+          commissioner_id: string | null
+          is_public: boolean | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          code: string
+          commissioner_id?: string | null
+          is_public?: boolean | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          code?: string
+          commissioner_id?: string | null
+          is_public?: boolean | null
+          created_at?: string
+        }
+      }
+      season: {
+        Row: {
+          id: string
+          league_id: string
+          start_date: string
+          end_date: string
+          num_weeks: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          league_id: string
+          start_date: string
+          end_date: string
+          num_weeks: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          league_id?: string
+          start_date?: string
+          end_date?: string
+          num_weeks?: number
+          created_at?: string
+        }
+      }
+      membership: {
+        Row: {
+          id: string
+          league_id: string
+          user_id: string
+          team_name: string
+          wins: number | null
+          losses: number | null
+          ties: number | null
+          is_group: boolean | null
+        }
+        Insert: {
+          id?: string
+          league_id: string
+          user_id: string
+          team_name: string
+          wins?: number | null
+          losses?: number | null
+          ties?: number | null
+          is_group?: boolean | null
+        }
+        Update: {
+          id?: string
+          league_id?: string
+          user_id?: string
+          team_name?: string
+          wins?: number | null
+          losses?: number | null
+          ties?: number | null
+          is_group?: boolean | null
+        }
+      }
+      week: {
+        Row: {
+          id: string
+          season_id: string
+          week_number: number
+          start_date: string
+          end_date: string
+        }
+        Insert: {
+          id?: string
+          season_id: string
+          week_number: number
+          start_date: string
+          end_date: string
+        }
+        Update: {
+          id?: string
+          season_id?: string
+          week_number?: number
+          start_date?: string
+          end_date?: string
+        }
+      }
+      matchup: {
+        Row: {
+          id: string
+          week_id: string
+          home_membership: string | null
+          away_membership: string | null
+          home_score: number | null
+          away_score: number | null
+          winner_membership: string | null
+        }
+        Insert: {
+          id?: string
+          week_id: string
+          home_membership?: string | null
+          away_membership?: string | null
+          home_score?: number | null
+          away_score?: number | null
+          winner_membership?: string | null
+        }
+        Update: {
+          id?: string
+          week_id?: string
+          home_membership?: string | null
+          away_membership?: string | null
+          home_score?: number | null
+          away_score?: number | null
+          winner_membership?: string | null
+        }
+      }
+      workout_entry: {
+        Row: {
+          id: string
+          user_id: string
+          entry_date: string
+          steps: number | null
+          active_minutes: number | null
+          calories: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          entry_date: string
+          steps?: number | null
+          active_minutes?: number | null
+          calories?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          entry_date?: string
+          steps?: number | null
+          active_minutes?: number | null
+          calories?: number | null
+          created_at?: string
+        }
+      }
+      score_log: {
+        Row: {
+          id: string
+          matchup_id: string | null
+          user_id: string | null
+          week_number: number | null
+          points: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          matchup_id?: string | null
+          user_id?: string | null
+          week_number?: number | null
+          points: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          matchup_id?: string | null
+          user_id?: string | null
+          week_number?: number | null
+          points?: number
+          created_at?: string
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+  }
+}
+
+---packages/lib/tsconfig.json---
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"]
+}
+
+---packages/ui/package.json---
+{
+  "name": "@fitness/ui",
+  "version": "0.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --external react",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch --external react",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.17",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "lucide-react": "^0.263.1",
+    "tailwind-merge": "^1.14.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.48.0",
+    "react": "^18.2.0",
+    "tsup": "^7.2.0",
+    "typescript": "^5.1.6"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  }
+}
+
+---packages/ui/src/index.ts---
+export * from './components/button'
+export * from './components/card'
+export * from './components/input'
+export * from './components/label'
+export * from './components/dialog'
+export * from './components/form'
+export * from './lib/utils'
+
+---packages/ui/src/lib/utils.ts---
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+---packages/ui/src/components/button.tsx---
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "../lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    return (
+      <button
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+---packages/ui/src/components/card.tsx---
+import * as React from "react"
+import { cn } from "../lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+---packages/ui/src/components/input.tsx---
+import * as React from "react"
+import { cn } from "../lib/utils"
+
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Input.displayName = "Input"
+
+export { Input }
+
+---packages/ui/src/components/label.tsx---
+import * as React from "react"
+import { cn } from "../lib/utils"
+
+export interface LabelProps
+  extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+
+const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
+  ({ className, ...props }, ref) => (
+    <label
+      ref={ref}
+      className={cn(
+        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        className
+      )}
+      {...props}
+    />
+  )
+)
+Label.displayName = "Label"
+
+export { Label }
+
+---supabase/migrations/001_initial_schema.sql---
+-- Enable UUID extension
+create extension if not exists "uuid-ossp";
+
+-- Create profile table
+create table public.profile (
+  id uuid primary key references auth.users on delete cascade,
+  display_name text not null check (char_length(display_name) <= 32),
+  avatar_url text,
+  bio text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Create league table
+create table public.league (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  code text not null unique check (char_length(code) = 6),
+  commissioner_id uuid references profile,
+  is_public boolean default false,
+  created_at timestamptz default now()
+);
+
+-- Create season table
+create table public.season (
+  id uuid primary key default gen_random_uuid(),
+  league_id uuid not null references league,
+  start_date date not null,
+  end_date date not null,
+  num_weeks int not null check (num_weeks between 4 and 52),
+  created_at timestamptz default now()
+);
+
+-- Create membership table
+create table public.membership (
+  id uuid primary key default gen_random_uuid(),
+  league_id uuid not null references league,
+  user_id uuid not null references profile,
+  team_name text not null,
+  wins int default 0,
+  losses int default 0,
+  ties int default 0,
+  is_group boolean default false,
+  unique (league_id, user_id)
+);
+
+-- Create week table
+create table public.week (
+  id uuid primary key default gen_random_uuid(),
+  season_id uuid not null references season,
+  week_number int not null,
+  start_date date not null,
+  end_date date not null
+);
+
+-- Create matchup table
+create table public.matchup (
+  id uuid primary key default gen_random_uuid(),
+  week_id uuid not null references week,
+  home_membership uuid references membership,
+  away_membership uuid references membership,
+  home_score int default 0,
+  away_score int default 0,
+  winner_membership uuid references membership
+);
+
+-- Create workout_entry table
+create table public.workout_entry (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references profile,
+  entry_date date not null,
+  steps int default 0 check (steps >= 0),
+  active_minutes int default 0,
+  calories int default 0,
+  created_at timestamptz default now(),
+  unique (user_id, entry_date)
+);
+
+-- Create score_log table
+create table public.score_log (
+  id uuid primary key default gen_random_uuid(),
+  matchup_id uuid references matchup,
+  user_id uuid references profile,
+  week_number int,
+  points int not null,
+  created_at timestamptz default now()
+);
+
+-- Enable RLS on all tables
+alter table profile enable row level security;
+alter table league enable row level security;
+alter table season enable row level security;
+alter table membership enable row level security;
+alter table week enable row level security;
+alter table matchup enable row level security;
+alter table workout_entry enable row level security;
+alter table score_log enable row level security;
+
+-- RLS Policies
+
+-- Profile policies
+create policy "Users can view all profiles" on profile
+  for select using (true);
+
+create policy "Users can update own profile" on profile
+  for update using (auth.uid() = id);
+
+create policy "Users can insert own profile" on profile
+  for insert with check (auth.uid() = id);
+
+-- League policies
+create policy "Users can view public leagues" on league
+  for select using (is_public = true);
+
+create policy "Members can view their leagues" on league
+  for select using (
+    exists (
+      select 1 from membership 
+      where membership.league_id = league.id 
+      and membership.user_id = auth.uid()
+    )
+  );
+
+create policy "Commissioners can update their leagues" on league
+  for update using (commissioner_id = auth.uid());
+
+create policy "Users can create leagues" on league
+  for insert with check (auth.uid() is not null);
+
+-- Membership policies
+create policy "Users can view memberships in their leagues" on membership
+  for select using (
+    exists (
+      select 1 from membership m2 
+      where m2.league_id = membership.league_id 
+      and m2.user_id = auth.uid()
+    )
+  );
+
+create policy "Users can join leagues" on membership
+  for insert with check (user_id = auth.uid());
+
+-- Workout entry policies
+create policy "Users can manage own workout entries" on workout_entry
+  for all using (auth.uid() = user_id);
+
+-- Season policies
+create policy "Users can view seasons for their leagues" on season
+  for select using (
+    exists (
+      select 1 from membership 
+      where membership.league_id = season.league_id 
+      and membership.user_id = auth.uid()
+    )
+  );
+
+-- Week policies
+create policy "Users can view weeks for their leagues" on week
+  for select using (
+    exists (
+      select 1 from membership 
+      join season on season.league_id = membership.league_id
+      where season.id = week.season_id 
+      and membership.user_id = auth.uid()
+    )
+  );
+
+-- Matchup policies
+create policy "Users can view matchups for their leagues" on matchup
+  for select using (
+    exists (
+      select 1 from membership 
+      join season on season.league_id = membership.league_id
+      join week on week.season_id = season.id
+      where week.id = matchup.week_id 
+      and membership.user_id = auth.uid()
+    )
+  );
+
+-- Score log policies
+create policy "Users can view score logs for their leagues" on score_log
+  for select using (
+    exists (
+      select 1 from membership 
+      join season on season.league_id = membership.league_id
+      join week on week.season_id = season.id
+      join matchup on matchup.week_id = week.id
+      where matchup.id = score_log.matchup_id 
+      and membership.user_id = auth.uid()
+    )
+  );
+
+---supabase/seed.sql---
+-- Insert sample profiles (these would be created via auth, but for demo)
+insert into profile (id, display_name, bio) values 
+  ('550e8400-e29b-41d4-a716-446655440001', 'John Doe', 'Fitness enthusiast'),
+  ('550e8400-e29b-41d4-a716-446655440002', 'Jane Smith', 'Marathon runner'),
+  ('550e8400-e29b-41d4-a716-446655440003', 'Mike Johnson', 'Gym warrior'),
+  ('550e8400-e29b-41d4-a716-446655440004', 'Sarah Wilson', 'Yoga instructor');
+
+-- Insert sample league
+insert into league (id, name, code, commissioner_id, is_public) values 
+  ('660e8400-e29b-41d4-a716-446655440001', 'Office Fitness Challenge', 'ABC123', '550e8400-e29b-41d4-a716-446655440001', true);
+
+-- Insert memberships
+insert into membership (league_id, user_id, team_name) values 
+  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'The Crushers'),
+  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002', 'Speed Demons'),
+  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003', 'Iron Giants'),
+  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440004', 'Zen Masters');
+
+-- Insert sample season
+insert into season (id, league_id, start_date, end_date, num_weeks) values 
+  ('770e8400-e29b-41d4-a716-446655440001', '660e8400-e29b-41d4-a716-446655440001', '2024-01-01', '2024-12-31', 52);
+
+-- Insert sample weeks
+insert into week (id, season_id, week_number, start_date, end_date) values 
+  ('880e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440001', 1, '2024-01-01', '2024-01-07'),
+  ('880e8400-e29b-41d4-a716-446655440002', '770e8400-e29b-41d4-a716-446655440001', 2, '2024-01-08', '2024-01-14');
+
+-- Insert sample workout entries
+insert into workout_entry (user_id, entry_date, steps, active_minutes, calories) values 
+  ('550e8400-e29b-41d4-a716-446655440001', '2024-01-01', 12000, 45, 350),
+  ('550e8400-e29b-41d4-a716-446655440002', '2024-01-01', 8500, 30, 280),
+  ('550e8400-e29b-41d4-a716-446655440003', '2024-01-01', 15000, 60, 450),
+  ('550e8400-e29b-41d4-a716-446655440004', '2024-01-01', 10500, 40, 320);
+
+---functions/score-week/index.ts---
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+interface Matchup {
+  id: string
+  week_id: string
+  home_membership: string
+  away_membership: string
+  home_score: number
+  away_score: number
+}
+
+interface WeeklyScore {
+  membership_id: string
+  total_points: number
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Get the current week that ended yesterday
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
+
+    const { data: weeks, error: weekError } = await supabaseClient
+      .from('week')
+      .select('*')
+      .eq('end_date', yesterdayStr)
+
+    if (weekError) throw weekError
+
+    for (const week of weeks || []) {
+      // Get all matchups for this week
+      const { data: matchups, error: matchupError } = await supabaseClient
+        .from('matchup')
+        .select('*')
+        .eq('week_id', week.id)
+
+      if (matchupError) throw matchupError
+
+      // Calculate scores for each membership in this week
+      const scores = new Map<string, number>()
+
+      // Get all workout entries for this week
+      const { data: workouts, error: workoutError } = await supabaseClient
+        .from('workout_entry')
+        .select(`
+          *,
+          profile!inner(
+            membership!inner(
+              id,
+              league_id
+            )
+          )
+        `)
+        .gte('entry_date
